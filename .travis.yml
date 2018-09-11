@@ -1,0 +1,24 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t jarstingstall/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run jarstingstall/react-test npm test -- --coverage
+
+after_success:
+  # build images
+  - docker build -t jarstingstall/multi-client ./client
+  - docker build -t jarstingstall/multi-nginx ./nginx
+  - docker build -t jarstingstall/multi-server ./server
+  - docker build -t jarstingstall/multi-worker ./worker
+  # authenticate with docker hub
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # push images to docker hub
+  - docker push jarstingstall/multi-client
+  - docker push jarstingstall/multi-nginx
+  - docker push jarstingstall/multi-server
+  - docker push jarstingstall/multi-worker
+  
